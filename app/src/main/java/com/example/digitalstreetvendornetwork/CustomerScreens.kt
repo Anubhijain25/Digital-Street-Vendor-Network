@@ -156,19 +156,30 @@ fun CustomerDiscoverScreen() {
         vendor.category == selectedFilter
     }
 
+    
+    var selectedVendor by remember {
+        mutableStateOf<DiscoverableVendor?>(null)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
 
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState
         ) {
-            visibleVendors.forEach { vendor ->
-                Marker(
-                    state = MarkerState(position = vendor.location),
-                    title = vendor.name,
-                    snippet = vendor.description
-                )
-            }
+            
+visibleVendors.forEach { vendor ->
+    Marker(
+        state = MarkerState(position = vendor.location),
+        title = vendor.name,
+        snippet = vendor.description,
+        onClick = {
+            selectedVendor = vendor
+            true
+        }
+    )
+}
+
         }
 
         Column(
@@ -251,6 +262,69 @@ fun CustomerDiscoverScreen() {
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                }
+            }
+        }
+    
+
+        selectedVendor?.let { vendor ->
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 8.dp
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = vendor.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = vendor.category,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        IconButton(onClick = { selectedVendor = null }) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Close vendor details"
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(text = vendor.description)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Available Products",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    vendor.products.forEach { product ->
+                        Text(
+                            text = "• $product",
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
                 }
             }
         }
