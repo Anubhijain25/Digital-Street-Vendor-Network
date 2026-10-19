@@ -50,38 +50,84 @@ fun searchVendors(
     }
 }
 
+
 @Composable
 fun CustomerAppMainScreen(onLogout: () -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Discover", "My Orders", "Profile")
+
+    val favouriteVendorIds = remember {
+        mutableStateListOf<Int>()
+    }
+
+    val tabs = listOf(
+        "Discover",
+        "Favourites",
+        "My Orders",
+        "Profile"
+    )
 
     Scaffold(
         bottomBar = {
             NavigationBar {
                 tabs.forEachIndexed { index, title ->
                     NavigationBarItem(
-                        icon = { Icon(imageVector = when(index) { 0 -> Icons.Filled.Search; 1 -> Icons.Filled.List; else -> Icons.Filled.Person }, contentDescription = title) },
-                        label = { Text(title) }, selected = selectedTab == index, onClick = { selectedTab = index }
+                        icon = {
+                            val icon = when (index) {
+                                0 -> Icons.Filled.Search
+                                1 -> Icons.Filled.Favorite
+                                2 -> Icons.Filled.List
+                                else -> Icons.Filled.Person
+                            }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = title
+                            )
+                        },
+                        label = { Text(title) },
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index }
                     )
                 }
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             when (selectedTab) {
-                0 -> CustomerDiscoverScreen()
-                1 -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Track My Pickups & Deliveries") }
-                2 -> CustomerProfileScreen(onLogout = onLogout)
+                0 -> CustomerDiscoverScreen(
+                    favouriteVendorIds = favouriteVendorIds
+                )
+
+                1 -> CustomerFavouritesScreen(
+                    favouriteVendorIds = favouriteVendorIds,
+                    onExploreClick = { selectedTab = 0 }
+                )
+
+                2 -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Track My Pickups & Deliveries")
+                }
+
+                3 -> CustomerProfileScreen(
+                    onLogout = onLogout
+                )
             }
         }
     }
 }
 
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomerDiscoverScreen() {
-    val mumbaiLocation = LatLng(19.0760, 72.8777)
+fun CustomerDiscoverScreen(
+    favouriteVendorIds: MutableList<Int>
+) {    val mumbaiLocation = LatLng(19.0760, 72.8777)
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(mumbaiLocation, 12f)
@@ -299,6 +345,33 @@ visibleVendors.forEach { vendor ->
                             )
                         }
 
+
+IconButton(
+    onClick = {
+        if (vendor.id in favouriteVendorIds) {
+            favouriteVendorIds.remove(vendor.id)
+        } else {
+            favouriteVendorIds.add(vendor.id)
+        }
+    }
+) {
+    val isFavourite = vendor.id in favouriteVendorIds
+
+    Icon(
+        imageVector = if (isFavourite) {
+            Icons.Filled.Favorite
+        } else {
+            Icons.Filled.FavoriteBorder
+        },
+        contentDescription = if (isFavourite) {
+            "Remove from favourites"
+        } else {
+            "Add to favourites"
+        },
+        tint = if (isFavourite) Color.Red else Color.Gray
+    )
+}
+
                         IconButton(onClick = { selectedVendor = null }) {
                             Icon(
                                 Icons.Filled.Close,
@@ -372,6 +445,96 @@ fun ProfileOptionCard(icon: androidx.compose.ui.graphics.vector.ImageVector, tit
             Text(title, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.weight(1f))
             Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
+        }
+    }
+}
+
+@Composable
+fun CustomerFavouritesScreen(
+    favouriteVendorIds: List<Int>,
+    onExploreClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Text(
+            text = "My Favourite Vendors",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        if (favouriteVendorIds.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.FavoriteBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text("No favourite vendors yet!")
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = onExploreClick) {
+                    Text("Explore Vendors")
+                }
+            }
+        } else {
+            favouriteVendorIds.forEach { vendorId ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = null,
+                            tint = Color.Red
+                        )
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        
+val vendorName = when (vendorId) {
+    1 -> "Raju Vegetables"
+    2 -> "Vada Pav Stall"
+    3 -> "Mumbai Fresh Fruits"
+    4 -> "Green Basket Vegetables"
+    5 -> "Mumbai Chaat Corner"
+    else -> "Unknown Vendor"
+}
+
+Column {
+    Text(
+        text = vendorName,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
+
+    Text(
+        text = "Saved to Favourites",
+        style = MaterialTheme.typography.bodySmall,
+        color = Color.Gray
+    )
+}
+
+                    }
+                }
+            }
         }
     }
 }
