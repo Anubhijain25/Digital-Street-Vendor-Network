@@ -23,6 +23,33 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
+
+data class DiscoverableVendor(
+    val id: Int,
+    val name: String,
+    val category: String,
+    val products: List<String>,
+    val location: LatLng,
+    val description: String
+)
+
+fun searchVendors(
+    vendors: List<DiscoverableVendor>,
+    query: String
+): List<DiscoverableVendor> {
+    val searchText = query.trim()
+
+    if (searchText.isEmpty()) return vendors
+
+    return vendors.filter { vendor ->
+        vendor.name.contains(searchText, ignoreCase = true) ||
+        vendor.category.contains(searchText, ignoreCase = true) ||
+        vendor.products.any {
+            it.contains(searchText, ignoreCase = true)
+        }
+    }
+}
+
 @Composable
 fun CustomerAppMainScreen(onLogout: () -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -50,33 +77,153 @@ fun CustomerAppMainScreen(onLogout: () -> Unit) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerDiscoverScreen() {
     val mumbaiLocation = LatLng(19.0760, 72.8777)
-    val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(mumbaiLocation, 12f) }
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(mumbaiLocation, 12f)
+    }
+
+    val vendors = remember {
+        listOf(
+            DiscoverableVendor(
+                id = 1,
+                name = "Raju Vegetables",
+                category = "Vegetables",
+                products = listOf("Tomatoes", "Potatoes", "Onions"),
+                location = LatLng(19.1070, 72.8377),
+                description = "Open till 8PM"
+            ),
+            DiscoverableVendor(
+                id = 2,
+                name = "Vada Pav Stall",
+                category = "Street Food",
+                products = listOf("Vada Pav", "Samosa", "Chai"),
+                location = LatLng(19.0860, 72.8877),
+                description = "Hot Snacks"
+            )
+        )
+    }
+
     var searchQuery by remember { mutableStateOf("") }
-    val filters = listOf("All", "Vegetables", "Fruits", "Street Food")
-    var selectedFilter by remember { mutableStateOf(filters[0]) }
+
+    val filters = listOf(
+        "All",
+        "Vegetables",
+        "Fruits",
+        "Street Food"
+    )
+
+    var selectedFilter by remember {
+        mutableStateOf("All")
+    }
+
+    val searchedVendors = remember(vendors, searchQuery) {
+        searchVendors(vendors, searchQuery)
+    }
+
+    val visibleVendors = searchedVendors.filter { vendor ->
+        selectedFilter == "All" ||
+        vendor.category == selectedFilter
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState) {
-            Marker(state = MarkerState(position = LatLng(19.1070, 72.8377)), title = "Raju Vegetables", snippet = "Open till 8PM")
-            Marker(state = MarkerState(position = LatLng(19.0860, 72.8877)), title = "Vada Pav Stall", snippet = "Hot Snacks")
+
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState
+        ) {
+            visibleVendors.forEach { vendor ->
+                Marker(
+                    state = MarkerState(position = vendor.location),
+                    title = vendor.name,
+                    snippet = vendor.description
+                )
+            }
         }
 
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp).align(Alignment.TopCenter)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .align(Alignment.TopCenter)
+        ) {
             OutlinedTextField(
-                value = searchQuery, onValueChange = { searchQuery = it }, placeholder = { Text("Search for vendors or items...") },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") }, modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(32.dp)),
-                shape = RoundedCornerShape(32.dp), singleLine = true, colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = MaterialTheme.colorScheme.primary)
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = {
+                    Text("Search for vendors or items...")
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = { searchQuery = "" }
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Clear search"
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Color.White,
+                        RoundedCornerShape(32.dp)
+                    ),
+                shape = RoundedCornerShape(32.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor =
+                        MaterialTheme.colorScheme.primary
+                )
             )
+
             Spacer(modifier = Modifier.height(12.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 items(filters) { filter ->
                     FilterChip(
-                        selected = selectedFilter == filter, onClick = { selectedFilter = filter }, label = { Text(filter) },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = Color.White)
+                        selected = selectedFilter == filter,
+                        onClick = {
+                            selectedFilter = filter
+                        },
+                        label = { Text(filter) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor =
+                                MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+
+            if (visibleVendors.isEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "No vendors found. Try another search.",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
