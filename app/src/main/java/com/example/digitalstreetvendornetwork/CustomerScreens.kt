@@ -104,7 +104,33 @@ fun CustomerDiscoverScreen() {
                 products = listOf("Vada Pav", "Samosa", "Chai"),
                 location = LatLng(19.0860, 72.8877),
                 description = "Hot Snacks"
-            )
+            ),
+
+            DiscoverableVendor(
+                id = 3,
+                name = "Mumbai Fresh Fruits",
+                category = "Fruits",
+                products = listOf("Apples", "Bananas", "Oranges", "Mangoes"),
+                location = LatLng(19.0990, 72.8460),
+                description = "Fresh seasonal fruits"
+),
+            DiscoverableVendor(
+                id = 4,
+                name = "Green Basket Vegetables",
+                category = "Vegetables",
+                products = listOf("Spinach", "Carrots", "Cauliflower", "Tomatoes"),
+                location = LatLng(19.1120, 72.8620),
+                description = "Fresh vegetables at affordable prices"
+),
+            DiscoverableVendor(
+                id = 5,
+                name = "Mumbai Chaat Corner",
+                category = "Street Food",
+                products = listOf("Pani Puri", "Bhel Puri", "Sev Puri"),
+                location = LatLng(19.0830, 72.8500),
+                description = "Authentic Mumbai street food"
+)
+
         )
     }
 
