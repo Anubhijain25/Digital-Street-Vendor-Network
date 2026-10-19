@@ -26,7 +26,14 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 // Data Models
-data class Product(val id: Int, val name: String, val price: String, val description: String)
+
+data class Product(
+    val id: Int,
+    val name: String,
+    val price: String,
+    val description: String,
+    val isAvailable: Boolean = true
+)
 data class VendorReview(val id: Int, val customerName: String, val rating: Int, val comment: String, val date: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -258,6 +265,40 @@ fun VendorCatalogueScreen(productList: MutableList<Product>) {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(product.price, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                             IconButton(onClick = { productList.remove(product) }) {
+
+Spacer(modifier = Modifier.height(8.dp))
+
+Row(
+    verticalAlignment = Alignment.CenterVertically
+) {
+    Text(
+        text = if (product.isAvailable) "Available" else "Sold Out",
+        style = MaterialTheme.typography.labelSmall,
+        color = if (product.isAvailable) {
+            MaterialTheme.colorScheme.secondary
+        } else {
+            MaterialTheme.colorScheme.error
+        }
+    )
+
+    Spacer(modifier = Modifier.width(4.dp))
+
+    Switch(
+        checked = product.isAvailable,
+        onCheckedChange = { newAvailability ->
+            val index = productList.indexOfFirst {
+                it.id == product.id
+            }
+
+            if (index != -1) {
+                productList[index] = product.copy(
+                    isAvailable = newAvailability
+                )
+            }
+        }
+    )
+}
+
                                 Icon(Icons.Filled.Delete, contentDescription = "Delete Product", tint = MaterialTheme.colorScheme.error)
                             }
                         }
