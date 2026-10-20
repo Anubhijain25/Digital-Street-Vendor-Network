@@ -583,6 +583,28 @@ fun CustomerOrdersScreen() {
         "Pending" to Color(0xFF757575)
     )
 
+val orderFilters = listOf(
+    "All",
+    "Pending",
+    "Preparing",
+    "Completed"
+)
+
+var selectedOrderFilter by remember {
+    mutableStateOf("All")
+}
+
+val filteredOrders = remember(orders, selectedOrderFilter) {
+    if (selectedOrderFilter == "All") {
+        orders
+    } else {
+        orders.filter { order ->
+            order.status == selectedOrderFilter
+        }
+    }
+}
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -600,13 +622,31 @@ fun CustomerOrdersScreen() {
             color = Color.Gray
         )
 
+Spacer(modifier = Modifier.height(16.dp))
+
+LazyRow(
+    horizontalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    items(orderFilters) { filter ->
+        FilterChip(
+            selected = selectedOrderFilter == filter,
+            onClick = {
+                selectedOrderFilter = filter
+            },
+            label = {
+                Text(filter)
+            }
+        )
+    }
+}
+
         Spacer(modifier = Modifier.height(16.dp))
 
         androidx.compose.foundation.lazy.LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(orders.size) { index ->
-                val order = orders[index]
+            items(filteredOrders.size) { index ->
+                val order = filteredOrders[index]
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
