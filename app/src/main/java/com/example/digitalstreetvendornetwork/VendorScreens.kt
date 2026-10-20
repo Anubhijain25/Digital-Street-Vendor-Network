@@ -197,6 +197,10 @@ fun VendorCatalogueScreen(productList: MutableList<Product>) {
     var nameError by remember { mutableStateOf(false) }
     var priceError by remember { mutableStateOf(false) }
 
+var nameErrorMessage by remember { mutableStateOf("") }
+var priceErrorMessage by remember { mutableStateOf("") }
+
+
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -206,13 +210,21 @@ fun VendorCatalogueScreen(productList: MutableList<Product>) {
                     OutlinedTextField(
                         value = newName, onValueChange = { newName = it; nameError = false },
                         label = { Text("Product Name") }, isError = nameError,
-                        supportingText = { if (nameError) Text("Name cannot be empty") },
+                        
+supportingText = {
+    if (nameError) Text(nameErrorMessage)
+},
+
                         singleLine = true, modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = newPrice, onValueChange = { newPrice = it; priceError = false },
                         label = { Text("Price (e.g. 50)") }, isError = priceError,
-                        supportingText = { if (priceError) Text("Enter a valid price") },
+                        
+supportingText = {
+    if (priceError) Text(priceErrorMessage)
+},
+
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true, modifier = Modifier.fillMaxWidth()
                     )
@@ -223,14 +235,76 @@ fun VendorCatalogueScreen(productList: MutableList<Product>) {
                     )
                 }
             },
-            confirmButton = {
-                Button(onClick = {
-                    if (newName.isNotBlank() && newPrice.isNotBlank()) {
-                        productList.add(Product(productList.size + 1, newName, if (newPrice.startsWith("₹")) newPrice else "₹$newPrice", newDesc))
-                        newName = ""; newPrice = ""; newDesc = ""; showDialog = false
-                    } else { nameError = !newName.isNotBlank(); priceError = !newPrice.isNotBlank() }
-                }) { Text("Save") }
-            },
+            
+confirmButton = {
+    Button(
+        onClick = {
+            val cleanName = newName.trim()
+            val cleanDescription = newDesc.trim()
+            val cleanPrice = newPrice
+                .trim()
+                .removePrefix("₹")
+                .trim()
+
+            val priceValue = cleanPrice.toDoubleOrNull()
+
+            val isDuplicate = productList.any {
+                it.name.trim().equals(
+                    cleanName,
+                    ignoreCase = true
+                )
+            }
+
+            nameError = cleanName.isEmpty() || isDuplicate
+            priceError = priceValue == null ||
+                    !priceValue.isFinite() ||
+                    priceValue <= 0.0
+
+            nameErrorMessage = when {
+                cleanName.isEmpty() ->
+                    "Product name cannot be empty"
+                isDuplicate ->
+                    "This product already exists"
+                else -> ""
+            }
+
+            priceErrorMessage = if (priceError) {
+                "Enter a valid price greater than ₹0"
+            } else {
+                ""
+            }
+
+            if (!nameError && !priceError) {
+                val validPrice = requireNotNull(priceValue)
+
+                val nextId =
+                    (productList.maxOfOrNull { it.id } ?: 0) + 1
+
+                val formattedPrice = "₹" +
+                    java.math.BigDecimal.valueOf(validPrice)
+                        .stripTrailingZeros()
+                        .toPlainString()
+
+                productList.add(
+                    Product(
+                        id = nextId,
+                        name = cleanName,
+                        price = formattedPrice,
+                        description = cleanDescription
+                    )
+                )
+
+                newName = ""
+                newPrice = ""
+                newDesc = ""
+                showDialog = false
+            }
+        }
+    ) {
+        Text("Save")
+    }
+},
+
             dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancel") } }
         )
     }
