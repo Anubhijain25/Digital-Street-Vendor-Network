@@ -106,12 +106,9 @@ fun CustomerAppMainScreen(onLogout: () -> Unit) {
                     onExploreClick = { selectedTab = 0 }
                 )
 
-                2 -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Track My Pickups & Deliveries")
-                }
+
+                2 -> CustomerOrdersScreen()
+
 
                 3 -> CustomerProfileScreen(
                     onLogout = onLogout
@@ -127,7 +124,8 @@ fun CustomerAppMainScreen(onLogout: () -> Unit) {
 @Composable
 fun CustomerDiscoverScreen(
     favouriteVendorIds: MutableList<Int>
-) {    val mumbaiLocation = LatLng(19.0760, 72.8777)
+) {
+    val mumbaiLocation = LatLng(19.0760, 72.8777)
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(mumbaiLocation, 12f)
@@ -202,7 +200,7 @@ fun CustomerDiscoverScreen(
         vendor.category == selectedFilter
     }
 
-    
+
     var selectedVendor by remember {
         mutableStateOf<DiscoverableVendor?>(null)
     }
@@ -213,7 +211,7 @@ fun CustomerDiscoverScreen(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState
         ) {
-            
+
 visibleVendors.forEach { vendor ->
     Marker(
         state = MarkerState(position = vendor.location),
@@ -311,7 +309,7 @@ visibleVendors.forEach { vendor ->
                 }
             }
         }
-    
+
 
         selectedVendor?.let { vendor ->
             Card(
@@ -508,7 +506,7 @@ fun CustomerFavouritesScreen(
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        
+
 val vendorName = when (vendorId) {
     1 -> "Raju Vegetables"
     2 -> "Vada Pav Stall"
@@ -531,7 +529,157 @@ Column {
         color = Color.Gray
     )
 }
+                    }
 
+                }
+            }
+}
+    }
+}
+
+data class CustomerOrder(
+    val id: String,
+    val vendorName: String,
+    val items: String,
+    val total: Int,
+    val date: String,
+    val status: String
+)
+
+@Composable
+fun CustomerOrdersScreen() {
+    val orders = remember {
+        listOf(
+            CustomerOrder(
+                "ORD001",
+                "Raju Vegetables",
+                "Tomatoes, Potatoes",
+                120,
+                "18 Oct 2026",
+                "Completed"
+            ),
+            CustomerOrder(
+                "ORD002",
+                "Mumbai Chaat Corner",
+                "Pani Puri, Bhel Puri",
+                90,
+                "19 Oct 2026",
+                "Preparing"
+            ),
+            CustomerOrder(
+                "ORD003",
+                "Mumbai Fresh Fruits",
+                "Apples, Bananas",
+                180,
+                "20 Oct 2026",
+                "Pending"
+            )
+        )
+    }
+
+    val statusColors = mapOf(
+        "Completed" to Color(0xFF2E7D32),
+        "Preparing" to Color(0xFFE65100),
+        "Pending" to Color(0xFF757575)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "My Orders",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "Demo orders — sample data only",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        androidx.compose.foundation.lazy.LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(orders.size) { index ->
+                val order = orders[index]
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween,
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = order.id,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = order.status,
+                                color = statusColors[order.status]
+                                    ?: Color.Gray,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = order.vendorName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = order.items,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        HorizontalDivider()
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = order.date,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+
+                            Text(
+                                text = "₹${order.total}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
