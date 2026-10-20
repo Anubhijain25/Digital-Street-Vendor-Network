@@ -642,6 +642,44 @@ LazyRow(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+if (filteredOrders.isEmpty()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Inbox,
+            contentDescription = null,
+            modifier = Modifier.size(56.dp),
+            tint = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "No orders found",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "No orders match the selected status.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { selectedOrderFilter = "All" }
+        ) {
+            Text("Show All Orders")
+        }
+    }
+}
+
         androidx.compose.foundation.lazy.LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
